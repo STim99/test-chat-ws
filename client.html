@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple chat</title>
+</head>
+
+<body style="margin: 0 auto; text-align: center;">
+    <pre id="messages" style="height: 500px;border: 2px gray solid;;"></pre>
+    <input type="text" id="message">
+    <button id="send">Send</button>
+
+    <script>
+        let userName = localStorage.getItem('name')
+        if (!userName) {
+            userName = prompt('Enter your name')
+            localStorage.setItem('name', userName)
+        }
+
+        let send = document.getElementById('send')
+        let input = document.getElementById('message')
+        let messages = document.getElementById('messages')
+
+        function showMessage(name, message) {
+            messages.textContent += `\n\n${name}: ${message}`
+            input.value = ''
+        }
+
+        let ws = new WebSocket('ws://localhost:8080')
+        ws.onopen = () => console.log('Connected to server')
+        ws.onmessage = (json) => { let data = JSON.parse(json.data); showMessage(data.name, data.message) }
+        ws.onclose = () => ws = null
+
+        send.onclick = () => {
+            if (ws) {
+                let data = {
+                    name: userName,
+                    message: input.value
+                }
+                ws.send(JSON.stringify(data))
+                showMessage(userName, input.value)
+            } else {
+                showMessage('No connection')
+            }
+        }
+    </script>
+</body>
+
+</html>
